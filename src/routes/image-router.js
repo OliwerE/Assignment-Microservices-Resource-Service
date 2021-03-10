@@ -16,19 +16,25 @@ const controller = new ImageController()
 
 const authorize = (req, res, next) => {
   try {
-    const token = req.headers.authorization.split(' ')[1]
+    const token = req.headers.authorization
 
-    // Lägg till 401: Bearer token is missing
+    console.log(token)
+
+    if (token === undefined) {
+      return next(createError(401))
+    }
+
+    const splitToken = token.split(' ')[1]
 
     const privateKey = readFileSync('public.pem', 'utf-8')
-    const payload = jwt.verify(token, privateKey)
+    const payload = jwt.verify(splitToken, privateKey)
     // console.log(payload)
     req.user = {
       email: payload.sub,
       permissionLevel: payload.x_permission_level
     }
     // console.log(req.user)
-    next()
+    return next()
   } catch (err) {
     // OBS KOMMER HIT OM INVALID SIGNATURE!
     console.log(err)
