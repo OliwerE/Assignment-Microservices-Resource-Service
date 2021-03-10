@@ -5,6 +5,9 @@
 import express from 'express'
 import createError from 'http-errors'
 
+import { readFileSync } from 'fs'
+import jwt from 'jsonwebtoken'
+
 import { ImageController } from '../controllers/image-controller.js'
 
 export const router = express.Router()
@@ -13,12 +16,24 @@ const controller = new ImageController()
 
 const authorize = (req, res, next) => {
   try {
-    
-    // kontrollera jwt här!
+    const token = req.headers.authorization.split(' ')[1]
 
+    // Lägg till 401: Bearer token is missing
+
+    const privateKey = readFileSync('public.pem', 'utf-8')
+    const payload = jwt.verify(token, privateKey)
+    // console.log(payload)
+    req.user = {
+      email: payload.sub,
+      permissionLevel: payload.x_permission_level
+    }
+    // console.log(req.user)
     next()
   } catch (err) {
-
+    // OBS KOMMER HIT OM INVALID SIGNATURE!
+    console.log(err)
+    // err 403 här!
+    next(createError(403))
   }
 } 
 

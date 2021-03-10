@@ -27,6 +27,10 @@ const startApplication = async () => {
   app.use('/', router)
 
   app.use((err, req, res, next) => {
+    if (err.status === 403) {
+      return res.status(403).json({ message: 'JWT Validation failed', status: '403' })
+    }
+
     if (err.status === 404) {
       return res.status(404).json({ message: 'Not Found', status: '404' })
     }
