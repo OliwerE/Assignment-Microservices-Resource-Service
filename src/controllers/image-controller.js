@@ -25,6 +25,7 @@ export class ImageController {
 
 
     // posta till image service
+    let imageServiceRes = ''
     const test = await fetch(process.env.IMAGE_SERVICE_URL, {
       method: 'POST',
       headers: {
@@ -35,26 +36,42 @@ export class ImageController {
     }).then(response => {
       return response.json()
     }).then(text => {
-      console.log(text)
+      // console.log(text)
+      imageServiceRes = text
     }).catch(err => {
       console.log(err)
       throw new Error('An error has occurred (getScraper)')
     })
 
 
+
     // console.log(test)
 
     // spara image url här
 
+    /*
+    const newImage = new Image({
+      imageUrl: imageServiceRes.imageUrl,
+      location: req.body.location,
+      description: req.body.description,
+      id: imageServiceRes.id
+    })
+    */
+
+    const newImage = {
+      imageUrl: imageServiceRes.imageUrl,
+      location: req.body.location,
+      description: req.body.description,
+      createdAt: imageServiceRes.createdAt,
+      updatedAt: imageServiceRes.updatedAt,
+      id: imageServiceRes.id
+    }
+
+    console.log(newImage)
+    // await newImage.save() // Saves new account in mongodb
+
 
     // lagra info + url i mongodb
 
-    /* 
-    const newAccount = new Account({
-      email: email,
-      password: await bcrypt.hash(password, 8) // Encrypts password
-    })
-    await newAccount.save() // Saves new account in mongodb
-    */
   }
 }
