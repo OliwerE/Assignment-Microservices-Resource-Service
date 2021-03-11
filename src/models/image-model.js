@@ -21,6 +21,10 @@ const schema = new mongoose.Schema({
   id: {
     type: String,
     required: true
+  },
+  owner: {
+    type: String,
+    required: true
   }
 }, {
   timestamps: true,
