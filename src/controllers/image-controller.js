@@ -12,6 +12,27 @@ export class ImageController {
     res.json({ message: 'test' })
   }
 
+  async getUserImages (req, res, next) {
+    try {
+      const email = req.user.email
+      const userImages = (await Image.find({ owner: email })).map(Image => ({
+        imageUrl: Image.imageUrl,
+        location: Image.location,
+        description: Image.description,
+        createdAt: Image.createdAt,
+        updatedAt: Image.updatedAt,
+        id: Image.id
+      }))
+
+      // console.log(userImages)
+
+      res.json(userImages)
+    } catch (err) {
+      console.log(err)
+      next(createError(500))
+    }
+  }
+
   async postNewImage (req, res, next) {
     try {
       console.log('-----')

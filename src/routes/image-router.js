@@ -43,7 +43,7 @@ const authorize = (req, res, next) => {
   }
 } 
 
-router.get('/', authorize, controller.temp) // get all img
+router.get('/', authorize, controller.getUserImages) // get all img
 router.post('/', authorize, controller.postNewImage) // add new img
 
 router.get('/images/:id') // get specific img
