@@ -37,14 +37,14 @@ const authorize = (req, res, next) => {
     return next()
   } catch (err) {
     // OBS KOMMER HIT OM INVALID SIGNATURE!
-    console.log(err)
+    // console.log(err.message)
     // err 403 här!
     next(createError(403))
   }
 } 
 
 router.get('/', authorize, controller.temp) // get all img
-router.post('/') // add new img
+router.post('/', authorize, controller.postNewImage) // add new img
 
 router.get('/images/:id') // get specific img
 router.put('/images/:id') // update specific img
