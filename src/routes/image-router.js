@@ -46,10 +46,14 @@ const authorize = (req, res, next) => {
 router.get('/', authorize, controller.getUserImages) // get all img
 router.post('/', authorize, controller.postNewImage) // add new img
 
+router.delete('/:id', authorize, controller.deleteImage) // remove specific img
+
 router.get('/images/:id') // get specific img
+
 router.put('/images/:id') // update specific img
 router.patch('/images/:id') // partially update specific img
-router.delete('/images/:id') // remove specific img
+
+router.delete('/images/:id', authorize, controller.deleteImage) // remove specific img
 
 // All other pages
 router.use('*', (req, res, next) => next(createError(404)))

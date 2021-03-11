@@ -64,7 +64,6 @@ export class ImageController {
         imageServiceRes = text
       }).catch(err => {
         console.log(err)
-        throw new Error('An error has occurred (getScraper)')
       })
 
 
@@ -110,6 +109,56 @@ export class ImageController {
     } catch (err) {
       next(createError(500))
     }
+
+  }
+
+  async deleteImage (req, res, next) {
+    try {
+      console.log('----delete----')
+
+      const imageId = req.params.id
+
+      // verifiera om ägare (gör innan denna metod!)
+
+      console.log(req.params.id)
+
+      const image = await Image.deleteOne({ id: imageId })
+
+      console.log(image)
+
+      if (image.deletedCount === 0) {
+        return res.status(404).json({ description: 'Image with id not found' })
+      }
+
+      console.log('---------------------------------------')
+
+      // ta bort från image server:
+
+      const url = process.env.IMAGE_SERVICE_URL + imageId
+      let response = 0
+      const test = await fetch(url, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'PRIVATE-TOKEN': process.env.IMAGE_SERVICE_TOKEN
+        }
+      }).then(response => {
+        return response.status
+      }).then(status => {
+        response = status
+      }).catch(err => {
+        console.log(err)
+      })
+
+      if (response === 204) {
+        return res.status(204).json({ description: 'Image Deleted' })
+      } else {
+        return res.status(404).json({ description: 'Image with id not found' })
+      }
+    } catch (err) {
+      next(createError(500))
+    }
+
 
   }
 }
