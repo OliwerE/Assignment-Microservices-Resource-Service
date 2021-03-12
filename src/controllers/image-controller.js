@@ -112,6 +112,23 @@ export class ImageController {
 
   }
 
+  async getImage (req, res, next) {
+    try {
+      const reqImage = (await Image.find({ id: req.params.id })).map(Image => ({
+        imageUrl: Image.imageUrl,
+        location: Image.location,
+        description: Image.description,
+        createdAt: Image.createdAt,
+        updatedAt: Image.updatedAt,
+        id: Image.id
+      }))
+
+      res.json(reqImage[0])
+    } catch (err) {
+      next(createError(500))
+    }
+  }
+
   async deleteImage (req, res, next) {
     try {
       console.log('----delete----')

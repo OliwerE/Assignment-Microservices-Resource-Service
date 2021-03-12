@@ -46,20 +46,23 @@ const authorize = (req, res, next) => {
 }
 
 const isOwner = async (req, res, next) => {
-  const reqImage = await Image.findOne({ id: req.params.id })
-  if (reqImage.owner === req.user.email) {
-    next()
-  } else {
-    next(createError(403))
+  try {
+    const reqImage = await Image.findOne({ id: req.params.id })
+    if (reqImage.owner === req.user.email) {
+      next()
+    } else {
+      next(createError(403))
+    }
+  } catch (err) {
+    next(createError(404))
   }
 }
 
 router.get('/', authorize, controller.getUserImages) // get all img
 router.post('/', authorize, controller.postNewImage) // add new img
-
 router.delete('/:id', authorize, isOwner, controller.deleteImage) // remove specific img
 
-router.get('/images/:id') // get specific img
+router.get('/:id', authorize, isOwner, controller.getImage) // get specific img
 
 router.put('/images/:id') // update specific img
 router.patch('/images/:id') // partially update specific img
