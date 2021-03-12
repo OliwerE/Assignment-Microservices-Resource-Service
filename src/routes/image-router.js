@@ -61,10 +61,9 @@ const isOwner = async (req, res, next) => {
 router.get('/', authorize, controller.getUserImages) // get all img
 router.post('/', authorize, controller.postNewImage) // add new img
 router.delete('/:id', authorize, isOwner, controller.deleteImage) // remove specific img
-
 router.get('/:id', authorize, isOwner, controller.getImage) // get specific img
+router.put('/:id', authorize, isOwner, controller.putUpdate) // update specific img
 
-router.put('/images/:id') // update specific img
 router.patch('/images/:id') // partially update specific img
 
 // All other pages

@@ -129,6 +129,92 @@ export class ImageController {
     }
   }
 
+  async putUpdate (req, res, next) {
+    try {
+      const newData = req.body
+      const imageId = req.params.id
+      console.log(newData)
+
+      // uppdatera bilden först i image service!
+
+      const newImageServiceData = { // Något fel här (!)
+        "data": newData.data,
+        "contentType": newData.contentType
+      }
+      const jsonObj = JSON.stringify(newImageServiceData)
+
+      const url = process.env.IMAGE_SERVICE_URL + imageId
+      let putRes = 0
+        const test = await fetch(url, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'PRIVATE-TOKEN': process.env.IMAGE_SERVICE_TOKEN
+          },
+          body: jsonObj
+        }).then(response => {
+          return response.status
+        }).then(status => {
+          // console.log(text)
+          putRes = status
+        }).catch(err => {
+          console.log(err)
+        })
+
+        // console.log('----')
+        // console.log(putRes)
+        // console.log('----')
+        
+        if (putRes === 204) {
+          // get image from image service
+          const url = process.env.IMAGE_SERVICE_URL + imageId
+        let jsonRes = 0
+        const test = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'PRIVATE-TOKEN': process.env.IMAGE_SERVICE_TOKEN
+          }
+        }).then(response => {
+          return response.json()
+        }).then(json => {
+          // console.log(text)
+          jsonRes = json
+        }).catch(err => {
+          console.log(err)
+        })
+
+
+        // console.log(jsonRes) // nya info från image service
+          const update = await Image.updateOne({ id: imageId }, { // Fel här!
+            imageUrl: jsonRes.imageUrl,
+            location: newData.location,
+            description: newData.description,
+            createdAt: jsonRes.createdAt,
+            updatedAt: jsonRes.updatedAt,
+            id: jsonRes.id
+          })
+
+          const UpdatedResource = (await Image.find({ id: imageId })).map(Image => ({
+            imageUrl: Image.imageUrl,
+            location: Image.location,
+            description: Image.description,
+            createdAt: Image.createdAt,
+            updatedAt: Image.updatedAt,
+            id: Image.id
+          }))
+
+          // console.log(UpdatedResource[0])
+          
+          res.json(UpdatedResource[0]) // OBS!! Fel i dokumentation? 204 med respons går inte!
+        } else {
+          return res.status(404).json({ description: 'Image with id not found' })
+        }
+    } catch (err) {
+      next(createError(500))
+    }
+  }
+
   async deleteImage (req, res, next) {
     try {
       console.log('----delete----')
