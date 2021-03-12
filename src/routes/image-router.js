@@ -10,6 +10,8 @@ import jwt from 'jsonwebtoken'
 
 import { ImageController } from '../controllers/image-controller.js'
 
+import { Image } from '../models/image-model.js'
+
 export const router = express.Router()
 
 const controller = new ImageController()
@@ -41,19 +43,26 @@ const authorize = (req, res, next) => {
     // err 403 här!
     next(createError(403))
   }
-} 
+}
+
+const isOwner = async (req, res, next) => {
+  const reqImage = await Image.findOne({ id: req.params.id })
+  if (reqImage.owner === req.user.email) {
+    next()
+  } else {
+    next(createError(403))
+  }
+}
 
 router.get('/', authorize, controller.getUserImages) // get all img
 router.post('/', authorize, controller.postNewImage) // add new img
 
-router.delete('/:id', authorize, controller.deleteImage) // remove specific img
+router.delete('/:id', authorize, isOwner, controller.deleteImage) // remove specific img
 
 router.get('/images/:id') // get specific img
 
 router.put('/images/:id') // update specific img
 router.patch('/images/:id') // partially update specific img
-
-router.delete('/images/:id', authorize, controller.deleteImage) // remove specific img
 
 // All other pages
 router.use('*', (req, res, next) => next(createError(404)))
