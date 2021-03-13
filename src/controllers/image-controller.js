@@ -150,24 +150,19 @@ export class ImageController {
 
   async patchUpdate (req, res, next) {
     try  {
-      console.log(req.body)
-
       const updateObj = {} // Objektet som uppdaterar datan i mongodb
 
-      
-      if (req.body.data && req.body.contentType) {
-        // Add image for update
-        console.log('img!')
-
-        const obj = {
+      if (req.body.data && req.body.contentType) { // Update image
+        const obj = { // New image data
           "data": req.body.data,
           "contentType": req.body.contentType
         }
         const jsonObj = JSON.stringify(obj)
-        // posta till image service
-        let imageServiceStatus = 0
+
         const url = process.env.IMAGE_SERVICE_URL + req.params.id 
-        const test = await fetch(url, { // UPPREPAD KOD!
+
+        let imageServiceStatus = 0
+        await fetch(url, { // Updates image service
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -177,14 +172,14 @@ export class ImageController {
         }).then(response => {
           return response.status
         }).then(status => {
-          // console.log(text)
           imageServiceStatus = status
         }).catch(err => {
           console.log(err)
+          next(createError(500))
         })
 
-        if (imageServiceStatus === 204) {
-          const test = await fetch(url, { // UPPREPAD KOD!
+        if (imageServiceStatus === 204) { // If image service update succeeded
+          await fetch(url, { // Gets updated image data from image service
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -193,41 +188,31 @@ export class ImageController {
           }).then(response => {
             return response.json()
           }).then(json => {
-            // console.log(text)
+            // Adds changed data to update object
             updateObj.imageUrl = json.imageUrl
             updateObj.createdAt = json.createdAt
             updateObj.updatedAt = json.updatedAt
             updateObj.id = json.id
           }).catch(err => {
             console.log(err)
+            next(createError(500))
           })
         } else {
-          // Error FIXA!
+          next(createError(500))
         }
-
       }
 
-      if (req.body.location) {
-        console.log('update location')
+      if (req.body.location) { // Update location
+        // Adds changed data to update object
         updateObj.location = req.body.location
       }
 
-      if (req.body.description) {
-        console.log('update description')
+      if (req.body.description) { // Update description
+        // Adds changed data to update object
         updateObj.description = req.body.description
       }
-
-      /*
-      console.log('-----')
-      console.log(updateObj)
-      */
       
-
-      const update = await Image.updateOne({ id: req.params.id }, updateObj)
-
-      // console.log(update)
-      // kontrollera att updateone fungerade
-
+      await Image.updateOne({ id: req.params.id }, updateObj) // Saves new data in mongodb
 
       res.status(204).send()
     } catch (err) {
