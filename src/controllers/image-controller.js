@@ -2,7 +2,6 @@
  * Module represents image controller.
  */
 
-import { json } from 'express'
 import createError from 'http-errors'
 import fetch from 'node-fetch'
 import { Image } from '../models/image-model.js'
