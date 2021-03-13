@@ -8,14 +8,9 @@ import fetch from 'node-fetch'
 import { Image } from '../models/image-model.js'
 
 export class ImageController {
-  temp (req, res, next) {
-    res.json({ message: 'test' })
-  }
-
   async getUserImages (req, res, next) {
     try {
-      const email = req.user.email
-      const userImages = (await Image.find({ owner: email })).map(Image => ({
+      const userImages = (await Image.find({ owner: req.user.email })).map(Image => ({
         imageUrl: Image.imageUrl,
         location: Image.location,
         description: Image.description,
@@ -23,34 +18,23 @@ export class ImageController {
         updatedAt: Image.updatedAt,
         id: Image.id
       }))
-
-      // console.log(userImages)
-
-      res.json(userImages)
+      res.json(userImages) // Responds with all found user images
     } catch (err) {
-      console.log(err)
       next(createError(500))
     }
   }
 
   async postNewImage (req, res, next) {
     try {
-      console.log('-----')
-      // console.log(process.env.IMAGE_SERVICE_TOKEN)
-      // console.log(req.body)
-
-      const obj = { // Något fel här (!)
+      const obj = { // Data to image service
         "data": req.body.data,
         "contentType": req.body.contentType
       }
       const jsonObj = JSON.stringify(obj)
 
-      // console.log(typeof jsonObj)
-
-
       // posta till image service
-      let imageServiceRes = ''
-      const test = await fetch(process.env.IMAGE_SERVICE_URL, {
+      let imageServiceRes = '' // Json response from image service
+      await fetch(process.env.IMAGE_SERVICE_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -59,31 +43,13 @@ export class ImageController {
         body: jsonObj
       }).then(response => {
         return response.json()
-      }).then(text => {
-        // console.log(text)
-        imageServiceRes = text
+      }).then(json => {
+        imageServiceRes = json
       }).catch(err => {
         console.log(err)
       })
 
-
-      // console.log(test)
-
-      // spara image url här
-
-      // response objekt
-      /*
-      const res = {
-        imageUrl: imageServiceRes.imageUrl,
-        location: req.body.location,
-        description: req.body.description,
-        createdAt: imageServiceRes.createdAt,
-        updatedAt: imageServiceRes.updatedAt,
-        id: imageServiceRes.id
-      }
-      */
-      // För mongodb
-      const newImage = new Image({
+      const imageObj = {
         imageUrl: imageServiceRes.imageUrl,
         location: req.body.location,
         description: req.body.description,
@@ -91,21 +57,12 @@ export class ImageController {
         updatedAt: imageServiceRes.updatedAt,
         id: imageServiceRes.id,
         owner: req.user.email
-      })
-
-      // console.log(newImage)
-
+      }
+      const newImage = new Image(imageObj)
+      await newImage.save() // Saves new image in mongodb
       
-      await newImage.save() // Saves new account in mongodb
-
-      res.status(201).json({
-        imageUrl: imageServiceRes.imageUrl,
-        location: req.body.location,
-        description: req.body.description,
-        createdAt: imageServiceRes.createdAt,
-        updatedAt: imageServiceRes.updatedAt,
-        id: imageServiceRes.id
-      })
+      delete imageObj.owner // Removes owner from response to client
+      res.status(201).json(imageObj)
     } catch (err) {
       next(createError(500))
     }
