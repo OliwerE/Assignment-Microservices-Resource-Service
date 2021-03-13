@@ -47,6 +47,7 @@ export class ImageController {
         imageServiceRes = json
       }).catch(err => {
         console.log(err)
+        next(createError(500))
       })
 
       const imageObj = {
@@ -66,7 +67,6 @@ export class ImageController {
     } catch (err) {
       next(createError(500))
     }
-
   }
 
   async getImage (req, res, next) {
@@ -88,21 +88,15 @@ export class ImageController {
 
   async putUpdate (req, res, next) {
     try {
-      const newData = req.body
-      const imageId = req.params.id
-      console.log(newData)
-
-      // uppdatera bilden först i image service!
-
-      const newImageServiceData = { // Något fel här (!)
-        "data": newData.data,
-        "contentType": newData.contentType
+      const newImageServiceData = { // Request body with image for image service.
+        "data": req.body.data,
+        "contentType": req.body.contentType
       }
       const jsonObj = JSON.stringify(newImageServiceData)
 
-      const url = process.env.IMAGE_SERVICE_URL + imageId
-      let putRes = 0
-        const test = await fetch(url, {
+      const url = process.env.IMAGE_SERVICE_URL + req.params.id
+      let putStatus = 0
+        await fetch(url, { // Updates image service
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -112,57 +106,39 @@ export class ImageController {
         }).then(response => {
           return response.status
         }).then(status => {
-          // console.log(text)
-          putRes = status
+          putStatus = status
         }).catch(err => {
           console.log(err)
+          next(createError(500))
         })
-
-        // console.log('----')
-        // console.log(putRes)
-        // console.log('----')
         
-        if (putRes === 204) {
-          // get image from image service
-          const url = process.env.IMAGE_SERVICE_URL + imageId
-        let jsonRes = 0
-        const test = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'PRIVATE-TOKEN': process.env.IMAGE_SERVICE_TOKEN
-          }
-        }).then(response => {
-          return response.json()
-        }).then(json => {
-          // console.log(text)
-          jsonRes = json
-        }).catch(err => {
-          console.log(err)
-        })
+        if (putStatus === 204) {
+          const url = process.env.IMAGE_SERVICE_URL + req.params.id
+          let jsonRes = 0
+          await fetch(url, { // Gets updated data from image service
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'PRIVATE-TOKEN': process.env.IMAGE_SERVICE_TOKEN
+            }
+          }).then(response => {
+            return response.json()
+          }).then(json => {
+            jsonRes = json
+          }).catch(err => {
+            console.log(err)
+            next(createError(500))
+          })
 
-
-        // console.log(jsonRes) // nya info från image service
-          const update = await Image.updateOne({ id: imageId }, { // Fel här!
+          await Image.updateOne({ id: req.params.id }, { // Updates image data in mongodb
             imageUrl: jsonRes.imageUrl,
-            location: newData.location,
-            description: newData.description,
+            location: req.body.location,
+            description: req.body.description,
             createdAt: jsonRes.createdAt,
             updatedAt: jsonRes.updatedAt,
             id: jsonRes.id
           })
 
-          const UpdatedResource = (await Image.find({ id: imageId })).map(Image => ({ // Onödig request! anv data frpb rad 189 ist!
-            imageUrl: Image.imageUrl,
-            location: Image.location,
-            description: Image.description,
-            createdAt: Image.createdAt,
-            updatedAt: Image.updatedAt,
-            id: Image.id
-          }))
-
-          // console.log(UpdatedResource[0])
-          
           res.status(204).send()
         } else {
           return res.status(404).json({ description: 'Image with id not found' })
