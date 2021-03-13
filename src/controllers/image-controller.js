@@ -6,7 +6,15 @@ import createError from 'http-errors'
 import fetch from 'node-fetch'
 import { Image } from '../models/image-model.js'
 
+/**
+ *
+ */
 export class ImageController {
+  /**
+   * @param req
+   * @param res
+   * @param next
+   */
   async getUserImages (req, res, next) {
     try {
       const userImages = (await Image.find({ owner: req.user.email })).map(Image => ({
@@ -23,11 +31,16 @@ export class ImageController {
     }
   }
 
+  /**
+   * @param req
+   * @param res
+   * @param next
+   */
   async postNewImage (req, res, next) {
     try {
       const obj = { // Data to image service
-        "data": req.body.data,
-        "contentType": req.body.contentType
+        data: req.body.data,
+        contentType: req.body.contentType
       }
       const jsonObj = JSON.stringify(obj)
 
@@ -60,7 +73,7 @@ export class ImageController {
       }
       const newImage = new Image(imageObj)
       await newImage.save() // Saves new image in mongodb
-      
+
       delete imageObj.owner // Removes owner from response to client
       res.status(201).json(imageObj)
     } catch (err) {
@@ -68,6 +81,11 @@ export class ImageController {
     }
   }
 
+  /**
+   * @param req
+   * @param res
+   * @param next
+   */
   async getImage (req, res, next) {
     try {
       const reqImage = (await Image.find({ id: req.params.id })).map(Image => ({
@@ -85,80 +103,90 @@ export class ImageController {
     }
   }
 
+  /**
+   * @param req
+   * @param res
+   * @param next
+   */
   async putUpdate (req, res, next) {
     try {
       const newImageServiceData = { // Request body with image for image service.
-        "data": req.body.data,
-        "contentType": req.body.contentType
+        data: req.body.data,
+        contentType: req.body.contentType
       }
       const jsonObj = JSON.stringify(newImageServiceData)
 
       const url = process.env.IMAGE_SERVICE_URL + req.params.id
       let putStatus = 0
-        await fetch(url, { // Updates image service
-          method: 'PUT',
+      await fetch(url, { // Updates image service
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'PRIVATE-TOKEN': process.env.IMAGE_SERVICE_TOKEN
+        },
+        body: jsonObj
+      }).then(response => {
+        return response.status
+      }).then(status => {
+        putStatus = status
+      }).catch(err => {
+        console.log(err)
+        next(createError(500))
+      })
+
+      if (putStatus === 204) {
+        const url = process.env.IMAGE_SERVICE_URL + req.params.id
+        let jsonRes = 0
+        await fetch(url, { // Gets updated data from image service
+          method: 'GET',
           headers: {
             'Content-Type': 'application/json',
             'PRIVATE-TOKEN': process.env.IMAGE_SERVICE_TOKEN
-          },
-          body: jsonObj
+          }
         }).then(response => {
-          return response.status
-        }).then(status => {
-          putStatus = status
+          return response.json()
+        }).then(json => {
+          jsonRes = json
         }).catch(err => {
           console.log(err)
           next(createError(500))
         })
-        
-        if (putStatus === 204) {
-          const url = process.env.IMAGE_SERVICE_URL + req.params.id
-          let jsonRes = 0
-          await fetch(url, { // Gets updated data from image service
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'PRIVATE-TOKEN': process.env.IMAGE_SERVICE_TOKEN
-            }
-          }).then(response => {
-            return response.json()
-          }).then(json => {
-            jsonRes = json
-          }).catch(err => {
-            console.log(err)
-            next(createError(500))
-          })
 
-          await Image.updateOne({ id: req.params.id }, { // Updates image data in mongodb
-            imageUrl: jsonRes.imageUrl,
-            location: req.body.location,
-            description: req.body.description,
-            createdAt: jsonRes.createdAt,
-            updatedAt: jsonRes.updatedAt,
-            id: jsonRes.id
-          })
+        await Image.updateOne({ id: req.params.id }, { // Updates image data in mongodb
+          imageUrl: jsonRes.imageUrl,
+          location: req.body.location,
+          description: req.body.description,
+          createdAt: jsonRes.createdAt,
+          updatedAt: jsonRes.updatedAt,
+          id: jsonRes.id
+        })
 
-          res.status(204).send()
-        } else {
-          return res.status(404).json({ description: 'Image with id not found' })
-        }
+        res.status(204).send()
+      } else {
+        return res.status(404).json({ description: 'Image with id not found' })
+      }
     } catch (err) {
       next(createError(500))
     }
   }
 
+  /**
+   * @param req
+   * @param res
+   * @param next
+   */
   async patchUpdate (req, res, next) {
-    try  {
+    try {
       const updateObj = {} // Objektet som uppdaterar datan i mongodb
 
       if (req.body.data && req.body.contentType) { // Update image
         const obj = { // New image data
-          "data": req.body.data,
-          "contentType": req.body.contentType
+          data: req.body.data,
+          contentType: req.body.contentType
         }
         const jsonObj = JSON.stringify(obj)
 
-        const url = process.env.IMAGE_SERVICE_URL + req.params.id 
+        const url = process.env.IMAGE_SERVICE_URL + req.params.id
 
         let imageServiceStatus = 0
         await fetch(url, { // Updates image service
@@ -210,7 +238,7 @@ export class ImageController {
         // Adds changed data to update object
         updateObj.description = req.body.description
       }
-      
+
       await Image.updateOne({ id: req.params.id }, updateObj) // Saves new data in mongodb
 
       res.status(204).send()
@@ -219,6 +247,11 @@ export class ImageController {
     }
   }
 
+  /**
+   * @param req
+   * @param res
+   * @param next
+   */
   async deleteImage (req, res, next) {
     try {
       const imageId = req.params.id

@@ -12,6 +12,14 @@ export const router = express.Router()
 
 const controller = new ImageController()
 
+/**
+ * Function authorize user sending request.
+ *
+ * @param {object} req - The request object.
+ * @param {object} res - The response object.
+ * @param {Function} next - Next function.
+ * @returns {Function} - Next method.
+ */
 const authorize = (req, res, next) => {
   try {
     const token = req.headers.authorization
@@ -37,6 +45,13 @@ const authorize = (req, res, next) => {
   }
 }
 
+/**
+ * Function verify if user is owner of image data.
+ *
+ * @param {object} req - The request object.
+ * @param {object} res - The response object.
+ * @param {Function} next - Next function.
+ */
 const isOwner = async (req, res, next) => {
   try {
     const reqImage = await Image.findOne({ id: req.params.id })

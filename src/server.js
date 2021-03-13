@@ -20,7 +20,7 @@ const startApplication = async () => {
 
   app.use(helmet()) // Security http headers
   app.use(logger('dev'))
-  app.use(express.json({ limit: "500kb" }))
+  app.use(express.json({ limit: '500kb' }))
 
   // Session options configured in ./config/mongoose.js
 
