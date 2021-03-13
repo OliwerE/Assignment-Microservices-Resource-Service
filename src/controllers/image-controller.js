@@ -7,13 +7,16 @@ import fetch from 'node-fetch'
 import { Image } from '../models/image-model.js'
 
 /**
- *
+ * Class represents the image controller.
  */
 export class ImageController {
   /**
-   * @param req
-   * @param res
-   * @param next
+   * Finds and returns all images owned by the requesting user.
+   *
+   * @param {object} req - The request object.
+   * @param {object} res - The response object.
+   * @param {Function} next - Next function.
+   * @returns {object} - The response object.
    */
   async getUserImages (req, res, next) {
     try {
@@ -25,16 +28,19 @@ export class ImageController {
         updatedAt: Image.updatedAt,
         id: Image.id
       }))
-      res.json(userImages) // Responds with all found user images
+      return res.json(userImages) // Responds with all found user images
     } catch (err) {
       next(createError(500))
     }
   }
 
   /**
-   * @param req
-   * @param res
-   * @param next
+   * Adds new image data to the resource service and image service.
+   *
+   * @param {object} req - The request object.
+   * @param {object} res - The response object.
+   * @param {Function} next - Next function.
+   * @returns {object} - The response object.
    */
   async postNewImage (req, res, next) {
     try {
@@ -75,16 +81,19 @@ export class ImageController {
       await newImage.save() // Saves new image in mongodb
 
       delete imageObj.owner // Removes owner from response to client
-      res.status(201).json(imageObj)
+      return res.status(201).json(imageObj)
     } catch (err) {
       next(createError(500))
     }
   }
 
   /**
-   * @param req
-   * @param res
-   * @param next
+   * Gets a specific image from the resource service.
+   *
+   * @param {object} req - The request object.
+   * @param {object} res - The response object.
+   * @param {Function} next - Next function.
+   * @returns {object} - The response object.
    */
   async getImage (req, res, next) {
     try {
@@ -97,16 +106,19 @@ export class ImageController {
         id: Image.id
       }))
 
-      res.json(reqImage[0])
+      return res.json(reqImage[0])
     } catch (err) {
       next(createError(500))
     }
   }
 
   /**
-   * @param req
-   * @param res
-   * @param next
+   * Updates image on both resource and image service.
+   *
+   * @param {object} req - The request object.
+   * @param {object} res - The response object.
+   * @param {Function} next - Next function.
+   * @returns {object} - The response object.
    */
   async putUpdate (req, res, next) {
     try {
@@ -161,7 +173,7 @@ export class ImageController {
           id: jsonRes.id
         })
 
-        res.status(204).send()
+        return res.status(204).send()
       } else {
         return res.status(404).json({ description: 'Image with id not found' })
       }
@@ -171,9 +183,12 @@ export class ImageController {
   }
 
   /**
-   * @param req
-   * @param res
-   * @param next
+   * Partially updates image data on resource and/or image service.
+   *
+   * @param {object} req - The request object.
+   * @param {object} res - The response object.
+   * @param {Function} next - Next function.
+   * @returns {object} - The response object.
    */
   async patchUpdate (req, res, next) {
     try {
@@ -241,16 +256,19 @@ export class ImageController {
 
       await Image.updateOne({ id: req.params.id }, updateObj) // Saves new data in mongodb
 
-      res.status(204).send()
+      return res.status(204).send()
     } catch (err) {
       next(createError(500))
     }
   }
 
   /**
-   * @param req
-   * @param res
-   * @param next
+   * Removes image from image and resource service.
+   *
+   * @param {object} req - The request object.
+   * @param {object} res - The response object.
+   * @param {Function} next - Next function.
+   * @returns {object} - The response object.
    */
   async deleteImage (req, res, next) {
     try {
@@ -263,7 +281,7 @@ export class ImageController {
 
       const url = process.env.IMAGE_SERVICE_URL + imageId
       let response = 0
-      const test = await fetch(url, { // Removes image from image service
+      await fetch(url, { // Removes image from image service
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
