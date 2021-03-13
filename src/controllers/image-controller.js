@@ -215,6 +215,93 @@ export class ImageController {
     }
   }
 
+  async patchUpdate (req, res, next) {
+    try  {
+      console.log(req.body)
+
+      const updateObj = {} // Objektet som uppdaterar datan i mongodb
+
+      
+      if (req.body.data && req.body.contentType) {
+        // Add image for update
+        console.log('img!')
+
+        const obj = {
+          "data": req.body.data,
+          "contentType": req.body.contentType
+        }
+        const jsonObj = JSON.stringify(obj)
+        // posta till image service
+        let imageServiceStatus = 0
+        const url = process.env.IMAGE_SERVICE_URL + req.params.id 
+        const test = await fetch(url, { // UPPREPAD KOD!
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'PRIVATE-TOKEN': process.env.IMAGE_SERVICE_TOKEN
+          },
+          body: jsonObj
+        }).then(response => {
+          return response.status
+        }).then(status => {
+          // console.log(text)
+          imageServiceStatus = status
+        }).catch(err => {
+          console.log(err)
+        })
+
+        if (imageServiceStatus === 204) {
+          const test = await fetch(url, { // UPPREPAD KOD!
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'PRIVATE-TOKEN': process.env.IMAGE_SERVICE_TOKEN
+            }
+          }).then(response => {
+            return response.json()
+          }).then(json => {
+            // console.log(text)
+            updateObj.imageUrl = json.imageUrl
+            updateObj.createdAt = json.createdAt
+            updateObj.updatedAt = json.updatedAt
+            updateObj.id = json.id
+          }).catch(err => {
+            console.log(err)
+          })
+        } else {
+          // Error FIXA!
+        }
+
+      }
+
+      if (req.body.location) {
+        console.log('update location')
+        updateObj.location = req.body.location
+      }
+
+      if (req.body.description) {
+        console.log('update description')
+        updateObj.description = req.body.description
+      }
+
+      /*
+      console.log('-----')
+      console.log(updateObj)
+      */
+      
+
+      const update = await Image.updateOne({ id: req.params.id }, updateObj)
+
+      // console.log(update)
+      // kontrollera att updateone fungerade
+
+
+      res.status(204).send()
+    } catch (err) {
+      next(createError(500))
+    }
+  }
+
   async deleteImage (req, res, next) {
     try {
       console.log('----delete----')

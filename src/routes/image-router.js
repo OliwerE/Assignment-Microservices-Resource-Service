@@ -63,8 +63,7 @@ router.post('/', authorize, controller.postNewImage) // add new img
 router.delete('/:id', authorize, isOwner, controller.deleteImage) // remove specific img
 router.get('/:id', authorize, isOwner, controller.getImage) // get specific img
 router.put('/:id', authorize, isOwner, controller.putUpdate) // update specific img
-
-router.patch('/images/:id') // partially update specific img
+router.patch('/:id', authorize, isOwner, controller.patchUpdate) // partially update specific img
 
 // All other pages
 router.use('*', (req, res, next) => next(createError(404)))
