@@ -195,7 +195,7 @@ export class ImageController {
             id: jsonRes.id
           })
 
-          const UpdatedResource = (await Image.find({ id: imageId })).map(Image => ({
+          const UpdatedResource = (await Image.find({ id: imageId })).map(Image => ({ // Onödig request! anv data frpb rad 189 ist!
             imageUrl: Image.imageUrl,
             location: Image.location,
             description: Image.description,
@@ -206,7 +206,7 @@ export class ImageController {
 
           // console.log(UpdatedResource[0])
           
-          res.json(UpdatedResource[0]) // OBS!! Fel i dokumentation? 204 med respons går inte!
+          res.status(204).send()
         } else {
           return res.status(404).json({ description: 'Image with id not found' })
         }
