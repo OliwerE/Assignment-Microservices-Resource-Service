@@ -222,29 +222,16 @@ export class ImageController {
 
   async deleteImage (req, res, next) {
     try {
-      console.log('----delete----')
-
       const imageId = req.params.id
-
-      // verifiera om ägare (gör innan denna metod!)
-
-      console.log(req.params.id)
-
-      const image = await Image.deleteOne({ id: imageId })
-
-      console.log(image)
+      const image = await Image.deleteOne({ id: imageId }) // Removes image data from resource service
 
       if (image.deletedCount === 0) {
         return res.status(404).json({ description: 'Image with id not found' })
       }
 
-      console.log('---------------------------------------')
-
-      // ta bort från image server:
-
       const url = process.env.IMAGE_SERVICE_URL + imageId
       let response = 0
-      const test = await fetch(url, {
+      const test = await fetch(url, { // Removes image from image service
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -266,7 +253,5 @@ export class ImageController {
     } catch (err) {
       next(createError(500))
     }
-
-
   }
 }
