@@ -35,7 +35,7 @@ const authorize = (req, res, next) => {
     const payload = jwt.verify(splitToken, privateKey)
 
     req.user = { // Adds user to request object
-      email: payload.sub,
+      email: payload.email,
       permissionLevel: payload.x_permission_level
     }
     return next()
