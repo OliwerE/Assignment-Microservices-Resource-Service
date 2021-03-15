@@ -36,7 +36,7 @@ const startApplication = async () => {
     }
 
     if (err.status === 404) {
-      return res.status(404).json({ message: 'Not Found', status: '404' })
+      return res.status(404).json({ message: 'Image with id not found', status: '404' })
     }
 
     if (err.status === 500) {
