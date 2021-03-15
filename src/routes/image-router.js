@@ -61,7 +61,7 @@ const isOwner = async (req, res, next) => {
       next(createError(403))
     }
   } catch (err) {
-    next(createError(404))
+    res.status(404).json({ description: 'Image with id not found' })
   }
 }
 
